@@ -15,80 +15,8 @@ Guidance part:
    move down = vibrate bottom
    Move forward = vibrate any two together
 
-Vibrate same sensor twice when co-ordinate is matched successfully.
+5)Vibrate same sensor twice when co-ordinate is matched successfully.
 Vibrate all four when object co-ordinates are matched
 
+6)There will be lapse of 3-10 secs between two commands
 
-5) First draft of code in python:
-
-# Co-ordinates of object
-c = [3,4,5]
-# Co-ordinates of hand
-org = [0,0,0]
-
-flag1 = False
-flag2 = False
-flag3 = False
-print('##matching x-coordinate##')
-while flag1==False:
-    if c[0]==org[0]:
-        flag1 = True
-        print('x coordinate matched')
-    if c[0]>org[0]:
-        flag1 = False
-        print('move right')
-        org[0]+=1
-    if c[0]<org[0]:
-        flag1 = False
-        org[0]-=1
-        print('move left')
-        
-print('##matching y-coordinate##')        
-while flag2==False:
-    if c[1]==org[1]:
-        flag2 = True
-        print('y coordinate matched')
-    else:
-        print('move forward')
-        org[1]+=1
-        
-        
-print('##matching z-coordinate##')        
-while flag3==False:
-    if c[2]==org[2]:
-        flag3 = True
-        print('z coordinate matched')
-        print('object reached- - vibrate all four sensors once')
-    if c[2]>org[2]:
-        flag1 = False
-        print('move up')
-        org[2]+=1
-    if c[2]<org[2]:
-        org[0]-=1
-        print('move down')           
-    
-    
-##############output################   
-##matching x-coordinate##
-move right
-move right
-move right
-x coordinate matched
-
-##matching y-coordinate##
-move forward
-move forward
-move forward
-move forward
-y coordinate matched
-
-##matching z-coordinate##
-move up
-move up
-move up
-move up
-move up
-z coordinate matched  
-      
-    
-    
