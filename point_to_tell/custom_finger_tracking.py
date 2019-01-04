@@ -1,6 +1,3 @@
-## @Author: Dishant Varshney
-""" Finger Tracking: This pyhton program tracks the finger """
-
 ## Importing Libraries
 import numpy as np 
 import cv2 as cv 
