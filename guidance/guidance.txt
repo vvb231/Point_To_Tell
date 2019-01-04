@@ -15,10 +15,11 @@ Guidance part:
    move down = vibrate bottom
    Move forward = vibrate any two together
 
-Vibrate same sensor twice when co-ordinate is matched successfully.
+5)Vibrate same sensor twice when co-ordinate is matched successfully.
 Vibrate all four when object co-ordinates are matched
 
 
+6)There will be lapse of 3-10 secs between two commands
 5) First draft of code in python:
 
 # Co-ordinates of object
