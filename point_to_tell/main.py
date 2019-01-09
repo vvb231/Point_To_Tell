@@ -291,8 +291,8 @@ def main(argv):
 
 	thresh = 0.25
 	darknet_path="../libdarknet/"
-	configPath = darknet_path + "cfg/yolov3-tiny.cfg"
-	weightPath = "yolov3-tiny.weights"
+	configPath = darknet_path + "cfg/yolov3.cfg"
+	weightPath = "yolov3.weights"
 	metaPath = "coco.data"
 	svoPath = None
 
@@ -396,43 +396,42 @@ def main(argv):
 			depth = point_cloud_mat.get_data()
 
 			# get the finger tip
-			ftop = detectFinger(image)
+			frame,ftop = detectFinger(image)
 			if not ftop:
 				No_Finger_image = image[:]
-				cv2.imshow("zed.png", image)
-				continue
+				
 			# Do the detection
+			else:
+				detections = detect(netMain, metaMain, No_Finger_image, thresh)
 
-			detections = detect(netMain, metaMain, image, thresh)
+				
+				print(chr(27) + "[2J"+"**** " +
+					  str(len(detections)) + " Results ****")
+				for detection in detections:
 
-			
-			print(chr(27) + "[2J"+"**** " +
-				  str(len(detections)) + " Results ****")
-			for detection in detections:
-
-				label = detection[0]
-				confidence = detection[1]
-				pstring = label+": "+str(np.rint(100 * confidence))+"%"
-				print(pstring)
-				bounds = detection[2]
-				yExtent = int(bounds[3])
-				xEntent = int(bounds[2])
-				# Coordinates are around the center
-				xCoord = int(bounds[0] - bounds[2]/2)
-				yCoord = int(bounds[1] - bounds[3]/2)
-				boundingBox = [ [xCoord, yCoord], [xCoord, yCoord + yExtent], [xCoord + xEntent, yCoord + yExtent], [xCoord + xEntent, yCoord] ]
-				#continue if the dectection missed the finger tip
-				if not (boundingBox[0][0]<ftop[0] and boundingBox[0][1]<ftop[1] and boundingBox[2][0]>ftop[0] and boundingBox[2][1]>ftop[1]):
-					continue
-				print(boundingBox)
-				thickness = 1
-				x, y, z = getObjectDepth(depth, bounds)
-				distance = math.sqrt(x * x + y * y + z * z)
-				distance = "{:.2f}".format(distance)
-				cv2.rectangle(image, (xCoord-thickness, yCoord-thickness), (xCoord + xEntent+thickness, yCoord+(18 +thickness*4)), color_array[detection[3]], -1)
-				cv2.putText(image, label + " " +  (str(distance) + " m"), (xCoord+(thickness*4), yCoord+(10 +thickness*4)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
-				cv2.rectangle(image, (xCoord-thickness, yCoord-thickness), (xCoord + xEntent+thickness, yCoord + yExtent+thickness), color_array[detection[3]], int(thickness*2))
-			cv2.imshow("zed.png", image)
+					label = detection[0]
+					confidence = detection[1]
+					pstring = label+": "+str(np.rint(100 * confidence))+"%"
+					print(pstring)
+					bounds = detection[2]
+					yExtent = int(bounds[3])
+					xEntent = int(bounds[2])
+					# Coordinates are around the center
+					xCoord = int(bounds[0] - bounds[2]/2)
+					yCoord = int(bounds[1] - bounds[3]/2)
+					boundingBox = [ [xCoord, yCoord], [xCoord, yCoord + yExtent], [xCoord + xEntent, yCoord + yExtent], [xCoord + xEntent, yCoord] ]
+					#continue if the dectection missed the finger tip
+					if not (boundingBox[0][0]<ftop[0] and boundingBox[0][1]<ftop[1] and boundingBox[2][0]>ftop[0] and boundingBox[2][1]>ftop[1]):
+						continue
+					print(boundingBox)
+					thickness = 1
+					x, y, z = getObjectDepth(depth, bounds)
+					distance = math.sqrt(x * x + y * y + z * z)
+					distance = "{:.2f}".format(distance)
+					cv2.rectangle(frame, (xCoord-thickness, yCoord-thickness), (xCoord + xEntent+thickness, yCoord+(18 +thickness*4)), color_array[detection[3]], -1)
+					cv2.putText(frame, label + " " +  (str(distance) + " m"), (xCoord+(thickness*4), yCoord+(10 +thickness*4)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
+					cv2.rectangle(frame, (xCoord-thickness, yCoord-thickness), (xCoord + xEntent+thickness, yCoord + yExtent+thickness), color_array[detection[3]], int(thickness*2))
+			cv2.imshow("zed.png", frame)
 			key = cv2.waitKey(5)
 		else:
 			key = cv2.waitKey(5)

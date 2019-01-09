@@ -30,5 +30,12 @@ To-Do:
 
 3.voice output of detected result.
 
+----
+Date: 2019-01-08
+Author:wenjun
+
+fingerdetection:
+
+1.use HSV function to seperate hand from backgroundcolor
 
 
