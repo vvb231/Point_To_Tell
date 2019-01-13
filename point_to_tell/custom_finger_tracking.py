@@ -53,7 +53,7 @@ def pauseT(focusF, fingerT, ftop):
 
 def detectFinger(frame):
     # focusF = frame[55:445, 305:595]
-    focusF = frame
+    focusF = frame[:]
     # cv.rectangle(frame, (300, 50), (600, 450), (0,0,255), 0)
     noise = hsvF(focusF)
     r,thresh = cv.threshold(noise, 100, 255, cv.THRESH_BINARY)

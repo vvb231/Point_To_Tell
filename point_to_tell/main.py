@@ -17,7 +17,7 @@ import sys
 import getopt
 from random import randint
 from custom_finger_tracking import detectFinger
-
+from gtts import gTTS
 def sample(probs):
 	s = sum(probs)
 	probs = [a/s for a in probs]
@@ -385,21 +385,27 @@ def main(argv):
 	# output_video = cv2.VideoWriter()
 	# video_path = './'
 	key=''
+	prev_center = None
+	obj_center = None
 	while key != 113:  # for 'q' key
 		err = cam.grab(runtime)
 		if err == sl.ERROR_CODE.SUCCESS:
 			cam.retrieve_image(mat, sl.VIEW.VIEW_LEFT)
 			image = mat.get_data()
-			
+			key = cv2.waitKey(5)
+			if key == ord('s'):
+				cv2.imwrite('saved_image.png',image)
+				cv2.putText(frame, "frame saved", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,150), 2)
 			cam.retrieve_measure(
 				point_cloud_mat, sl.MEASURE.MEASURE_XYZRGBA)
 			depth = point_cloud_mat.get_data()
 
 			# get the finger tip
 			frame,ftop = detectFinger(image)
+			
 			if not ftop:
 				No_Finger_image = image[:]
-				
+				obj_locations = set()
 			# Do the detection
 			else:
 				detections = detect(netMain, metaMain, No_Finger_image, thresh)
@@ -407,7 +413,9 @@ def main(argv):
 				
 				print(chr(27) + "[2J"+"**** " +
 					  str(len(detections)) + " Results ****")
-				for detection in detections:
+				dist = sys.maxsize
+				index = -1
+				for idx,detection in enumerate(detections):
 
 					label = detection[0]
 					confidence = detection[1]
@@ -423,16 +431,45 @@ def main(argv):
 					#continue if the dectection missed the finger tip
 					if not (boundingBox[0][0]<ftop[0] and boundingBox[0][1]<ftop[1] and boundingBox[2][0]>ftop[0] and boundingBox[2][1]>ftop[1]):
 						continue
-					print(boundingBox)
+					center = ((boundingBox[0][0]+boundingBox[2][0])/2.0,(boundingBox[0][1]+boundingBox[2][1])/2.0)
+					this_dist = math.sqrt((ftop[0]-center[0])**2 + (ftop[1]-center[1])**2)
+					if dist > this_dist:
+						index = idx
+						dist = this_dist
+						obj_center = center
+				if index != -1:
+					detection = detections[index]
+					label = detection[0]
+					confidence = detection[1]
+					pstring = label+": "+str(np.rint(100 * confidence))+"%"
+					print(pstring)
+					bounds = detection[2]
+					yExtent = int(bounds[3])
+					xEntent = int(bounds[2])
+					# Coordinates are around the center
+					xCoord = int(bounds[0] - bounds[2]/2)
+					yCoord = int(bounds[1] - bounds[3]/2)
 					thickness = 1
 					x, y, z = getObjectDepth(depth, bounds)
 					distance = math.sqrt(x * x + y * y + z * z)
 					distance = "{:.2f}".format(distance)
+
 					cv2.rectangle(frame, (xCoord-thickness, yCoord-thickness), (xCoord + xEntent+thickness, yCoord+(18 +thickness*4)), color_array[detection[3]], -1)
 					cv2.putText(frame, label + " " +  (str(distance) + " m"), (xCoord+(thickness*4), yCoord+(10 +thickness*4)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 2)
 					cv2.rectangle(frame, (xCoord-thickness, yCoord-thickness), (xCoord + xEntent+thickness, yCoord + yExtent+thickness), color_array[detection[3]], int(thickness*2))
-			cv2.imshow("zed.png", frame)
+					if obj_center != prev_center:
+						prev_center = obj_center
+						voiceoutput = gTTS(text="It's a"+label)
+						voiceoutput.save('output.mp3')
+						os.system('mpg321 output.mp3')
 			key = cv2.waitKey(5)
+			# if key == ord('s'):
+			# 	cv2.imwrite('saved_image.png',image)
+			# 	cv2.putText(frame, "frame saved", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,150), 2)
+			# cv2.imshow("zed.png", frame)
+
+				
+
 		else:
 			key = cv2.waitKey(5)
 	cv2.destroyAllWindows()
