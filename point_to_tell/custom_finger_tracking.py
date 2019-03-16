@@ -4,8 +4,10 @@ import cv2 as cv
 import math
 
 ## Defining Constants
-lwr = np.array([0,50,70], np.uint8)
-upr = np.array([100,230,230], np.uint8)
+# lwr = np.array([0,50,70], np.uint8)
+# upr = np.array([100,230,230], np.uint8)
+lwr = np.array([0,48,50], np.uint8)
+upr = np.array([30,230,230], np.uint8)
 kernel = np.ones((5,5), np.uint8)
 fingerP = []
 fingerT = []
@@ -51,7 +53,7 @@ def pauseT(focusF, fingerT, ftop):
 
 def detectFinger(frame):
     # focusF = frame[55:445, 305:595]
-    focusF = frame
+    focusF = frame[:]
     # cv.rectangle(frame, (300, 50), (600, 450), (0,0,255), 0)
     noise = hsvF(focusF)
     r,thresh = cv.threshold(noise, 100, 255, cv.THRESH_BINARY)
@@ -59,29 +61,43 @@ def detectFinger(frame):
     ftop=None
     try:
         cnt = max(cont, key = cv.contourArea)
+        epsilon = 0.001*cv.arcLength(cnt, True)
+        approx = cv.approxPolyDP(cnt, epsilon, True)
+        hull = cv.convexHull(approx, returnPoints=False)
+        area_cnt = cv.contourArea(approx)
+        defects = cv.convexityDefects(approx, hull)
+        centroid = centroidF(cnt)
+        if defects is not None:
+                if area_cnt > 10000:
+                        for i in range(defects.shape[0]):
+                            s,e,f,d = defects[i,0]
+                            start = tuple(approx[s][0])
+                            end = tuple(approx[e][0])
+                            far = tuple(approx[f][0])
+                            ftop = tuple(cnt[cnt[:,:,1].argmin()][0])
 
-        # epsilon = 0.001*cv.arcLength(cnt, True)
-        # approx = cv.approxPolyDP(cnt, epsilon, True)
-
-        # hull = cv.convexHull(approx, returnPoints=False)
-        # area_cnt = cv.contourArea(approx)
-        # defects = cv.convexityDefects(approx, hull)
-
-        ftop = tuple(cnt[cnt[:,:,1].argmin()][0])
-        cv.circle(focusF, ftop, 5, (0,0,255), -1)
+                            cv.circle(focusF, ftop, 5, (0,0,255), -1)
+                            cv.line(focusF, start, end, (0,255,0), 2)
+                            cv.circle(focusF, centroid, 3, (0,255,255), -1)
+                else:
+                    cv.putText(frame, "Can't detect anything", (10, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,150), 2) 
+                    return (frame,None)
+        # ftop = tuple(cnt[cnt[:,:,1].argmin()][0])
+        # cv.circle(focusF, ftop, 5, (0,0,255), -1)
 
     except:
-        cv.putText(frame, "Can't detect anything", (10, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,150), 2) 
+        cv.putText(frame, "put hand in the frame", (10, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,150), 2)
+        return (frame,None)
     # cv.imwrite('test1.png',frame)
-    return ftop
-## Main function
+    return (frame,ftop)
 
+## Main function
 if __name__ == '__main__':
     cap = cv.VideoCapture(0)  # capture the frames from the web camera
 
     while cap.isOpened():
         ret, frame = cap.read()
-        detectFinger(frame)
+        # detectFinger(frame)
         if ret == True:
             frame = cv.flip(frame, 1)
 
@@ -117,8 +133,8 @@ if __name__ == '__main__':
                                 ftop = tuple(cnt[cnt[:,:,1].argmin()][0])
 
                                 cv.circle(focusF, ftop, 5, (0,0,255), -1)
-                                # cv.line(focusF, start, end, (0,255,0), 2)
-                                # cv.circle(focusF, centroid, 3, (0,255,255), -1)
+                                cv.line(focusF, start, end, (0,255,0), 2)
+                                cv.circle(focusF, centroid, 3, (0,255,255), -1)
 
                                 pauseT(focusF, fingerT, ftop)
                                 if p == True:
@@ -133,7 +149,7 @@ if __name__ == '__main__':
             except:
                 cv.putText(frame, "Put your hand in the frame", (10, 70), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
             
-            # points(focusF, fingerP)
+            points(focusF, fingerP)
             cv.imshow('Finger Detection', frame)
 
             k = cv.waitKey(1) & 0xff

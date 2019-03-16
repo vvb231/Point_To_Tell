@@ -19,8 +19,10 @@ Guidance part:
 Vibrate all four when object co-ordinates are matched
 
 
+
+
 6)There will be lapse of 3-10 secs between two commands
-5) First draft of code in python:
+7) First draft of code in python:
 
 # Co-ordinates of object
 c = [3,4,5]
@@ -93,3 +95,4 @@ z coordinate matched
       
     
     
+
